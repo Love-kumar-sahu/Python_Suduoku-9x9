@@ -6,9 +6,14 @@ pygame.init()
 win = pygame.display.set_mode((w,w))
 COLOR_INACTIVE = pygame.Color('lightskyblue3')
 COLOR_ACTIVE = pygame.Color('dodgerblue2')
+COLOR_BORDAR = pygame.Color(139,96,19)
 COLOR_SET = pygame.Color(0,0,255,255)
 FONT = pygame.font.Font(None, 32)
 pygame.display.set_caption("sudoku solver.......")
+
+def cp(row,col):
+    if (row>=0 and row<3 and col>2 and col<6) or (row>5 and col>2 and col<6):
+        return True
 
 class Spot:
     def __init__(self,row,col,width,text='',data=0):
@@ -64,7 +69,10 @@ class Spot:
     
     def draw(self,win):
         win.blit(self.text_surface, (self.rect.x+5, self.rect.y+5))
-        pygame.draw.rect(win,self.color,self.rect,2)
+        if (cp(self.row,self.col) or cp(self.col,self.row)) and self.active == False:
+            pygame.draw.rect(win,COLOR_BORDAR,self.rect,2)
+        else:
+            pygame.draw.rect(win,self.color,self.rect,2)
     
 
 def make_grid(rows,width):
@@ -94,9 +102,15 @@ def check(grid ,i,j):
             l.remove(grid[i][k].data)
         if grid[k][j].data in l:
             l.remove(grid[k][j].data)
+    rk = i//3
+    rm = j//3
+    for k in range(3):
+        for m in range(3):
+            if grid[(rk*3)+k][(rm*3)+m].data in l:
+                l.remove(grid[(rk*3)+k][(rm*3)+m].data)
     return l
 
-def sudo(grid,i,j):
+def sudo(grid,i=0,j=0):
     if j >= 9:
         j = 0
         i += 1
@@ -114,6 +128,11 @@ def sudo(grid,i,j):
     grid[i][j].data = 0
     return False
 
+def change(g):
+    for i in range(9):
+        for j in range(9):
+            g[i][j].data = 0
+
 def main(win,width):
     rows = 9
     grid = make_grid(rows,width)
@@ -124,7 +143,9 @@ def main(win,width):
                 run = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    print(sudo(grid,0,0))
+                    if sudo(grid)!=True:
+                        print('not possible')
+                        change(grid)
                     for grd in grid:
                         for j in grd:
                             j.Updraw(win)
